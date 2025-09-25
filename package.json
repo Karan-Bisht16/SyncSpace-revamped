@@ -1,0 +1,35 @@
+{
+    "name": "syncspace",
+    "version": "0.0.0",
+    "description": "SyncSpace: A Community-Driven Social Network. Think Reddit meets Twitter",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "build": "npm run build --w packages/shared && npm run build --w packages/server && npm run build --w packages/client",
+        "dev:client": "npm run dev --w packages/client",
+        "dev:server": "npm run dev --w packages/server",
+        "dev:shared": "npm run dev --w packages/shared",
+        "build:client": "npm run build --w packages/shared && npm run build --w packages/client",
+        "build:server": "npm install --w packages/server && npm run build --w packages/shared && npm run build --w packages/server",
+        "build:shared": "npm run build --w packages/shared",
+        "start:client": "npm run dev --w packages/client",
+        "start:server": "node packages/server/dist/server/src/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "workspaces": [
+        "./packages/*"
+    ],
+    "devDependencies": {
+        "@types/lodash": "^4.17.20",
+        "typescript": "^5.8.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "[ADD]"
+    },
+    "author": "Karan_Bisht16",
+    "license": "ISC",
+    "dependencies": {
+        "lodash": "^4.17.21"
+    }
+}

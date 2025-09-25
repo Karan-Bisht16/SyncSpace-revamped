@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "esModuleInterop": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@syncspace/shared": [
+                "packages/shared/src/index.js"
+            ]
+        },
+        "typeRoots": [
+            "./node_modules/@types"
+        ]
+    }
+}

@@ -1,0 +1,1 @@
+export type ChangePasswordField = 'currentPassword' | 'newPassword';
