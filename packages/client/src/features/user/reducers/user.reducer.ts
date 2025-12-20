@@ -1,10 +1,11 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 // importing features
 import { accountExtraReducers } from '../features/account/account.user.reducer';
 import { authExtraReducers } from '../features/auth/auth.user.reducer';
 import { profileExtraReducers } from '../features/profile/profile.user.reducer';
 import { sessionExtraReducers } from '../features/session/session.user.reducer';
 // importing types
+import type { PayloadAction } from '@reduxjs/toolkit';
 import type { SettingSchema } from '@syncspace/shared';
 import type { ApiCallStatus } from '../../../types';
 import type { RetryMeta, UserService, UserSlice } from '../types';

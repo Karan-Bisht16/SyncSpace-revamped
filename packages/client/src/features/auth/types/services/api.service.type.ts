@@ -9,7 +9,3 @@ export type IsUsernameAvailableParams = {
 export type ForgotPasswordParams = {
     email: string,
 };
-
-export type DecodeResetPasswordTokenParams = {
-    resetPasswordToken: string,
-};

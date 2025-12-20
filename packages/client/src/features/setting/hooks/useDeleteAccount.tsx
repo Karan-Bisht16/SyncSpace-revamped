@@ -14,7 +14,6 @@ export const useDeleteAccount = () => {
 
     const showErrorSnackBar = useErrorSnackBar();
 
-    // deleteAccount
     const deleteAccountStatus = useSelector((state: RootState) => state.user.status.deleteAccount);
     const deleteAccountError = useSelector((state: RootState) => state.user.error.deleteAccount);
 
@@ -32,20 +31,4 @@ export const useDeleteAccount = () => {
             dispatch(cleanup('deleteAccount'));
         }
     }, [deleteAccountStatus, deleteAccountError]);
-
-    // determineReauth
-    const determineReauthStatus = useSelector((state: RootState) => state.user.status.determineReauth);
-    const determineReauthError = useSelector((state: RootState) => state.user.error.determineReauth);
-
-    useEffect(() => {
-        if (determineReauthStatus === 'failed' && determineReauthError) {
-            showErrorSnackBar(new ApiError(determineReauthError));
-            dispatch(cleanup('determineReauth'));
-        }
-    }, [determineReauthStatus, determineReauthError]);
-
-    return {
-        dispatch,
-        determineReauthStatus,
-    };
 };

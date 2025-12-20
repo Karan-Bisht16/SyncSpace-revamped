@@ -34,7 +34,7 @@ export const useChangePassword = () => {
 
     const [showPassword, setShowPassword] = useState({ currentPassword: false, newPassword: false });
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         try {
@@ -94,6 +94,6 @@ export const useChangePassword = () => {
         refs,
         showPassword,
         setShowPassword,
-        handleSubmit,
+        handleChangePassword,
     };
 };

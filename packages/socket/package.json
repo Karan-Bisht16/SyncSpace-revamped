@@ -1,0 +1,22 @@
+{
+    "name": "@syncspace/socket",
+    "version": "0.0.0",
+    "description": "Socket for SyncSpace",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc --project tsconfig.json",
+        "dev": "nodemon",
+        "start": "node dist/socket/src/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "socket.io": "^4.8.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "[ADD]"
+    },
+    "author": "Karan_Bisht16",
+    "license": "ISC"
+}

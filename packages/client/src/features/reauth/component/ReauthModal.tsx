@@ -25,7 +25,7 @@ export const ReauthModal = () => {
         passwordRef,
         showPassword,
         setShowPassword,
-        handleSubmit,
+        handleReauth,
     } = useReauth();
     const { closeReauthModal } = useReauthModal();
 
@@ -40,9 +40,8 @@ export const ReauthModal = () => {
             <CenteredBox
                 component='form'
                 sx={{ flexDirection: 'column', gap: 1.75, width: '100%' }}
-                onSubmit={handleSubmit}
+                onSubmit={handleReauth}
             >
-
                 <FormTextField
                     name='password'
                     label='Password'

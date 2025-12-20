@@ -7,7 +7,7 @@ import { AUTH_TOKEN_FIELDS } from '../data/constants.js';
 // importing types
 import type { JwtPayload } from 'jsonwebtoken';
 import type { UserDocument } from '@syncspace/shared';
-import type { DecodeEmailTokenParams, JwtFieldTypes, ParseJwtPayloadReturnType } from '../types/index.js';
+import type { JwtFieldTypes, ParseJwtPayloadReturnType, ValidateTokenParams } from '../types/index.js';
 // importing models
 import { User } from '../models/user.model.js';
 // importing responses
@@ -76,9 +76,11 @@ export const parseJwtPayload = <T extends JwtFieldTypes>(
 };
 
 // NOTE: this function assumes that all emailTokens will have _id in them to identify users
-export const decodeEmailToken = async <T extends JwtFieldTypes>(params: DecodeEmailTokenParams<T>) => {
+export const validateToken = async <T extends JwtFieldTypes>(
+    params: ValidateTokenParams<T>
+) => {
     const { action, token, fields } = params;
-    const { decodeEmailToken: decodeRes } = responses;
+    const { validateToken: decodeRes } = responses;
 
     if (!token) {
         throw new ApiError(decodeRes.noToken);

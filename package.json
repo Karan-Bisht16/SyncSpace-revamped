@@ -5,20 +5,26 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "build": "npm run build --w packages/shared && npm run build --w packages/server && npm run build --w packages/client",
+        "build": "npm run build --w packages/shared && npm run build --w packages/server && npm run --w packages/socket && npm run build --w packages/client",
         "dev:client": "npm run dev --w packages/client",
         "dev:server": "npm run dev --w packages/server",
+        "dev:socket": "npm run dev --w packages/socket",
         "dev:shared": "npm run dev --w packages/shared",
         "build:client": "npm run build --w packages/shared && npm run build --w packages/client",
-        "build:server": "npm install --w packages/server && npm run build --w packages/shared && npm run build --w packages/server",
+        "build:server": "npm i --w packages/server && npm run build --w packages/shared && npm run build --w packages/server",
+        "build:socket": "npm i --w packages/socket && npm run build --w packages/shared && npm run build --w packages/socket",
         "build:shared": "npm run build --w packages/shared",
         "start:client": "npm run dev --w packages/client",
         "start:server": "node packages/server/dist/server/src/index.js",
+        "start:socket": "node packages/socket/dist/server/src/index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "workspaces": [
         "./packages/*"
     ],
+    "dependencies": {
+        "lodash": "^4.17.21"
+    },
     "devDependencies": {
         "@types/lodash": "^4.17.20",
         "typescript": "^5.8.3"
@@ -28,8 +34,5 @@
         "url": "[ADD]"
     },
     "author": "Karan_Bisht16",
-    "license": "ISC",
-    "dependencies": {
-        "lodash": "^4.17.21"
-    }
+    "license": "ISC"
 }

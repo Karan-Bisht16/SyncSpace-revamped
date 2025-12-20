@@ -16,6 +16,7 @@ const requiredEnvs = [
     'EMAIL_SECRET',
     'RESET_PASSWORD_EXPIRY',
     'UPDATE_EMAIL_EXPIRY',
+    'VERIFY_EMAIL_EXPIRY',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
     'CLOUDINARY_API_SECRET',
@@ -45,6 +46,7 @@ export const RE_AUTH_BUFFER_MINUTES = Number(process.env.RE_AUTH_BUFFER_MINUTES!
 export const EMAIL_SECRET = process.env.EMAIL_SECRET!;
 export const RESET_PASSWORD_EXPIRY = process.env.RESET_PASSWORD_EXPIRY!;
 export const UPDATE_EMAIL_EXPIRY = process.env.UPDATE_EMAIL_EXPIRY!;
+export const VERIFY_EMAIL_EXPIRY = process.env.VERIFY_EMAIL_EXPIRY!;
 export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!;
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY!;
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET!;

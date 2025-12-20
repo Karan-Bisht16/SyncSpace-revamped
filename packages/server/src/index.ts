@@ -16,5 +16,5 @@ try {
         console.log(`Server is running on port ${PORT}`);
     });
 } catch (error) {
-    console.error('Failed to initialize app. Ceck database connection or port availability \n', error);
+    console.error('Failed to initialize app. Check database connection or port availability \n', error);
 }

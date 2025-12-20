@@ -10,8 +10,6 @@ import {
 } from '../controllers/user/account.user.controller.js';
 import {
     changePassword,
-    decodeUpdateEmailToken,
-    decodeVerifyEmailToken,
     initiateEmailUpdation,
     initiateEmailVerification,
     updateEmail,
@@ -29,14 +27,12 @@ router.get('/fetchSession', auth, fetchSession);
 router.get('/determineReauth', auth, requireReauth, determineReauth);
 
 // POST
-router.post('/initiateEmailUpdation', auth, requireReauth, initiateEmailUpdation);
-router.post('/decodeUpdateEmailToken', decodeUpdateEmailToken);
 router.post('/initiateEmailVerification', auth, requireReauth, initiateEmailVerification);
-router.post('/decodeVerifyEmailToken', decodeVerifyEmailToken);
+router.post('/initiateEmailUpdation', auth, requireReauth, initiateEmailUpdation);
 
 // PATCH
-router.patch('/updateEmail', updateEmail);
 router.patch('/verifyEmail', verifyEmail);
+router.patch('/updateEmail', updateEmail);
 router.patch('/updateSetting', auth, updateSetting);
 router.patch('/resetSetting', auth, resetSetting);
 router.patch('/changePassword', auth, requireReauth, changePassword);

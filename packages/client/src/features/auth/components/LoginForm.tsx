@@ -30,7 +30,7 @@ export const LoginForm = (props: LoginFormProps) => {
         refs,
         showPassword,
         setShowPassword,
-        handleSubmit,
+        handleLogin,
     } = useLoginForm();
 
     const { openForgotPasswordModal } = useAuthModal();
@@ -49,7 +49,7 @@ export const LoginForm = (props: LoginFormProps) => {
             <CenteredBox
                 component='form'
                 sx={{ flexDirection: 'column', width: '100%' }}
-                onSubmit={handleSubmit}
+                onSubmit={handleLogin}
             >
                 <CenteredBox sx={{ flexDirection: 'column', gap: 2.75, width: '100%' }}>
                     <FormTextField

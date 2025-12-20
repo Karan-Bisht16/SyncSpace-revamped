@@ -38,7 +38,7 @@ export const useLoginForm = () => {
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleLogin = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         try {
@@ -85,6 +85,6 @@ export const useLoginForm = () => {
         refs,
         showPassword,
         setShowPassword,
-        handleSubmit,
+        handleLogin,
     };
 };

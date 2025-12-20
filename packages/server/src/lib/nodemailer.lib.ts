@@ -56,11 +56,11 @@ export const getEmailLink = async (params: GetEmailLinkParams) => {
 
     const origin = validateReqOrigin(req);
 
-    const updateEmailToken = jwt.sign(
+    const emailToken = jwt.sign(
         { action: action, ...data },
         EMAIL_SECRET,
         { expiresIn: expiresIn as any }
     );
 
-    return `${origin}/email/${action}/${updateEmailToken}`;
+    return `${origin}/email/${action}/${emailToken}`;
 };

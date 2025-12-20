@@ -5,6 +5,13 @@ import type { UpdatePasswordParams } from '../types';
 // importing services
 import { apiHandler } from '../../../services/api.service';
 
+export const initiateEmailVerification = (
+    callbackId?: string,
+) => apiHandler(() => API.post('/user/initiateEmailVerification'),{
+    reauthService: 'changePassword',
+    callbackId,
+});
+
 export const changePassword = (
     body: UpdatePasswordParams,
     callbackId?: string,

@@ -1,3 +1,5 @@
+export * from './common/email.type.js';
+
 export * from './models/error.model.type.js'
 export * from './models/interaction.model.type.js';
 export * from './models/user.model.type.js';

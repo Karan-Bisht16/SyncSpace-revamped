@@ -1,6 +1,7 @@
 export * from './controllers/auth/availability.auth.controller.response.js';
 export * from './controllers/auth/lifecycle.auth.controller.response.js';
 export * from './controllers/auth/recovery.auth.controller.response.js';
+export * from './controllers/token/lifecycle.token.controller.response.js';
 export * from './controllers/user/account.user.controller.response.js';
 export * from './controllers/user/profile.user.controller.response.js';
 export * from './controllers/user/session.user.controller.response.js';

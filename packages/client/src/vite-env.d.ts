@@ -7,4 +7,5 @@ interface ImportMeta {
 interface ImportMetaEnv {
     readonly VITE_MODE: 'DEVELOPMENT' | 'PRODUCTION',
     readonly VITE_BACKEND_URL: string,
+    readonly VITE_SOCKET_URL: string,
 };

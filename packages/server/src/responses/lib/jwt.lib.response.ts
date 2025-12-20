@@ -23,30 +23,30 @@ export const JwtLibResponses = {
             trace: 'JwtLib/parseJwtPayload/invalidToken',
         },
     },
-    decodeEmailToken: {
+    validateToken: {
         noToken: {
             code: 409,
             message: 'No token provided',
             context: 'No token was provided',
-            trace: 'JwtLib/decodeEmailToken/noToken',
+            trace: 'JwtLib/validateToken/noToken',
         },
         tokenExpired: {
             code: 401,
             message: 'Link has expired',
             context: 'Token provided in email link has expired',
-            trace: 'JwtLib/decodeEmailToken/tokenExpired',
+            trace: 'JwtLib/validateToken/tokenExpired',
         },
         invalidAction: {
             code: 401,
             message: 'Link action is invalid',
             context: 'Action within token is different from expected',
-            trace: 'JwtLib/decodeEmailToken/tokenExpired',
+            trace: 'JwtLib/validateToken/tokenExpired',
         },
         noUser: {
             code: 409,
             message: 'Invalid link',
             context: 'Reset token decoded, but no corresponding user was found in DB',
-            trace: 'JwtLib/decodeEmailToken/noUser',
+            trace: 'JwtLib/validateToken/noUser',
         },
     },
 };

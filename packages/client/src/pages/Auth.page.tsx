@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 // importing features
 import { AuthModal } from '../features/auth';
 // importing types
@@ -32,7 +32,7 @@ const Auth = () => {
         );
     }
 
-    return <Navigate to='/' replace />;
+    return navigate('/', { replace: true });
 };
 
 export default Auth;

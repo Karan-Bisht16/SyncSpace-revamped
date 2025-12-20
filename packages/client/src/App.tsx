@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { NavBar } from './features/navbar';
 import { fetchSession } from './features/user';
 import { useReauthListener } from './features/reauth';
+import { useSocket } from './features/socket';
 // importing types
 import type { AppDispatch, RootState } from './types';
 // importing hooks
@@ -15,7 +16,7 @@ import { Modals } from './components/Modals';
 import { SnackBars } from './components/SnackBars';
 // importing pages
 import Auth from './pages/Auth.page';
-import Reset from './pages/Reset.page';
+import Email from './pages/Email.page';
 
 // lazy-loading pages
 const Home = lazy(() => import('./pages/Home.page'));
@@ -24,6 +25,7 @@ const Test = lazy(() => import('./pages/Test.page'));
 
 export const App = () => {
     useReauthListener();
+    useSocket();
 
     const dispatch = useDispatch<AppDispatch>();
     const fetchSessionStatus = useSelector((state: RootState) => state.user.status.fetchSession);
@@ -48,7 +50,7 @@ export const App = () => {
                 <Route path='/' element={Load(Home)} />
                 <Route path='/profile/:username' element={Load(Profile)} />
                 <Route path='/auth/:mode' Component={Auth} />
-                <Route path='/auth/reset/:resetPasswordToken' Component={Reset} />
+                <Route path='/email/:action/:token' Component={Email} />
                 <Route path='/test' element={Load(Test)} />
                 <Route path='*' element={<Navigate to='/' />} />
             </Routes>

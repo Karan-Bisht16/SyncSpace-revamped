@@ -6,12 +6,13 @@ import {
     validateNewPassword,
 } from '@syncspace/shared';
 // importing config
-import { UPDATE_EMAIL_EXPIRY } from '../../config/env.config.js';
+import { UPDATE_EMAIL_EXPIRY, VERIFY_EMAIL_EXPIRY } from '../../config/env.config.js';
 // importing types
 import type { UserDocument } from '@syncspace/shared';
 // importing models
 import { User } from '../../models/user.model.js';
 // importing libs
+import { validateToken } from '../../lib/jwt.lib.js';
 import { getEmail, getEmailLink, sendMail } from '../../lib/nodemailer.lib.js';
 // importing service
 import { validateNewEmail } from '../../services/user.service.js';
@@ -23,17 +24,64 @@ import {
     ProfileUserControllerResponses as responses,
     getProfileUserControllerResponse as getResponses,
 } from '../../responses/index.js';
-import { decodeEmailToken } from '../../lib/jwt.lib.js';
 
-export const initiateEmailVerification = asyncReqHandler(async () => { });
+export const initiateEmailVerification = asyncReqHandler(async (req) => {
+    const { initiateEmailVerification: emailRes } = responses;
 
-export const decodeVerifyEmailToken = asyncReqHandler(async () => { });
+    const user = req.user as UserDocument;
 
-export const verifyEmail = asyncReqHandler(async () => { });
+    // TODO: add received socket id as well
+    const link = await getEmailLink({
+        req,
+        action: 'verifyEmail',
+        data: { _id: user._id, email: req.user.email },
+        expiresIn: VERIFY_EMAIL_EXPIRY || '24h',
+    });
+
+    (async () => {
+        sendMail({
+            req,
+            to: getEmail(user),
+            subject: 'Verify email',
+            html: `<a href='${link}'>Click here</a>`,
+            priority: 'high',
+        });
+    })();
+
+    return new ApiResponse(emailRes.success);
+});
+
+export const verifyEmail = asyncReqHandler(async (req) => {
+    const { verifyEmailToken } = validateReqBody(req);
+    const { verifyEmail: emailRes } = responses;
+
+    const user = await validateToken({
+        action: 'updateEmail',
+        token: verifyEmailToken,
+        fields: { _id: 'string', newEmail: 'string' },
+    });
+
+    await User.findByIdAndUpdate(user._id, {
+        $set: { 'auth.isEmailVerified': true },
+    });
+
+    // TODO: should i add 'Who this?' link in email?
+    (async () => {
+        sendMail({
+            req,
+            to: getEmail(user),
+            subject: 'Email updated',
+            html: `Your email ${user.email} is verified for account r/${user.username}`,
+            priority: 'high',
+        });
+    })();
+
+    return new ApiResponse(emailRes.success);
+});
 
 export const initiateEmailUpdation = asyncReqHandler(async (req) => {
     const { newEmail } = validateReqBody(req);
-    const { updateEmail: emailRes } = responses;
+    const { initiateEmailUpdation: emailRes } = responses;
 
     const newEmailStr = validateNewEmail(newEmail);
 
@@ -59,27 +107,15 @@ export const initiateEmailUpdation = asyncReqHandler(async (req) => {
     return new ApiResponse(emailRes.success);
 });
 
-export const decodeUpdateEmailToken = asyncReqHandler(async (req) => {
-    const { updateEmailToken } = validateReqBody(req);
-    const { decodeUpdateEmailToken: verifyRes } = responses;
-
-    await decodeEmailToken({
-        action: 'updateEmail',
-        token: updateEmailToken,
-        fields: { _id: 'string', newEmail: 'string' },
-    });
-
-    return new ApiResponse(verifyRes.success);
-});
-
-// TODO: Should it be get (as in as soon as link is opened then updateEmail is fired) or post (a page is opened and user clicks on a button to fire updateEmail)???
+// TODO: Should it be get (as in as soon as link is opened then updateEmail is fired) or 
+// post (a page is opened and user clicks on a button to fire updateEmail)???
 export const updateEmail = asyncReqHandler(async (req) => {
-    const { updateEmailToken, newEmail } = validateReqBody(req);
+    const { emailToken, newEmail } = validateReqBody(req);
     const { updateEmail: emailRes } = responses;
 
-    const user = await decodeEmailToken({
+    const user = await validateToken({
         action: 'updateEmail',
-        token: updateEmailToken,
+        token: emailToken,
         fields: { _id: 'string', newEmail: 'string' },
     });
 

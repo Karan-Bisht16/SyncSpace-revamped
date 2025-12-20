@@ -2,21 +2,25 @@
 import type { UserDocument } from '@syncspace/shared';
 
 export const ProfileUserControllerResponses = {
-    initiateEmailVerification: {},
-    decodeVerifyEmailToken: {},
-    verifyEmail: {},
+    initiateEmailVerification: {
+        success: {
+            code: 200,
+            message: 'Email sent successfully for email verification',
+            trace: 'ProfileUserController/initiateEmailVerification/success',
+        },
+    },
+    verifyEmail: {
+        success: {
+            code: 200,
+            message: 'Email verified successfully',
+            trace: 'ProfileUserController/verifyEmail/success',
+        },
+    },
     initiateEmailUpdation: {
         success: {
             code: 200,
-            message: 'Email sent successfully',
+            message: 'Email sent successfully for email updation',
             trace: 'ProfileUserController/initiateEmailUpdation/success',
-        },
-    },
-    decodeUpdateEmailToken: {
-        success: {
-            code: 200,
-            message: 'Token is valid',
-            trace: 'ProfileUserController/decodeUpdateEmailToken/success',
         },
     },
     updateEmail: {

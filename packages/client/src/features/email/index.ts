@@ -1,0 +1,1 @@
+export { EmailHandler } from "./core/EmailHandler";

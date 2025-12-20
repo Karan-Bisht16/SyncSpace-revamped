@@ -29,7 +29,7 @@ export const useReauth = () => {
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleReauth = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         try {
@@ -61,6 +61,6 @@ export const useReauth = () => {
         passwordRef,
         showPassword,
         setShowPassword,
-        handleSubmit,
+        handleReauth,
     };
 };

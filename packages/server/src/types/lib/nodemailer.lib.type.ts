@@ -3,8 +3,7 @@ import type { Readable } from "stream";
 import type { Request } from "express";
 import type { AttachmentLike } from "nodemailer/lib/mailer/index.js";
 import type Mail from "nodemailer/lib/mailer/index.js";
-
-export type EmailActions = 'resetPassword' | 'updateEmail';
+import type { TokenAction } from "@syncspace/shared";
 
 export type SendMailParams = {
     req: Request,
@@ -15,7 +14,7 @@ export type SendMailParams = {
 
 export type GetEmailLinkParams = {
     req: Request,
-    action: EmailActions,
+    action: TokenAction,
     data: { _id: any } & Record<string, any>,
     expiresIn: string,
 };

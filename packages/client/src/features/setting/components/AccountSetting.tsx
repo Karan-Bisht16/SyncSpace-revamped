@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { validatePassword } from '@syncspace/shared';
 // importing mui components
 import Box from '@mui/material/Box';
@@ -6,13 +6,15 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 // importing mui icons
+import EmailVerifiedIcon from '@mui/icons-material/CheckCircle';
 import ShowPasswordIcon from '@mui/icons-material/Visibility';
 import HidePasswordIcon from '@mui/icons-material/VisibilityOff';
 // importing features
-import { determineReauth } from '../../user';
+import { determineReauth, verifyEmail } from '../../user';
 // importing types
-import type { RootState } from '../../../types';
+import type { AppDispatch, RootState } from '../../../types';
 // importing hooks
 import { useSettingModal } from '../hooks/useSettingModal';
 import { useDeleteAccount } from '../hooks/useDeleteAccount';
@@ -21,16 +23,23 @@ import { useChangePassword } from '../hooks/useChangePassword';
 import { CenteredBox } from '../../../components/CenteredBox';
 import { FormTextField } from '../../../components/FormTextField';
 import { SectionCaption, SectionHeading, SectionSubHeading } from './ui/SettingTypography';
+import { ToolTip } from '../../../components/ToolTip';
+import { useVerifyEmail } from '../hooks/useVerifyEmail';
+import { useDetermineReauth } from '../hooks/useDetermineReauth';
 
 export const AccountSetting = () => {
+    const dispatch = useDispatch<AppDispatch>();
+
+    const user = useSelector((state: RootState) => state.user.user);
     const changePasswordStatus = useSelector((state: RootState) => state.user.status.changePassword);
+    const verifyEmailStatus = useSelector((state: RootState) => state.user.status.verifyEmail);
 
     const { openDeleteAccountModal } = useSettingModal();
 
     const {
         formData,
         formDispatch,
-        handleSubmit,
+        handleChangePassword,
         onChange,
         refs,
         setShowPassword,
@@ -40,10 +49,11 @@ export const AccountSetting = () => {
     const { currentPassword, newPassword } = formData;
     const { currentPasswordRef, newPasswordRef } = refs;
 
-    const {
-        dispatch,
-        determineReauthStatus,
-    } = useDeleteAccount();
+    useDeleteAccount();
+
+    const { initiateEmailVerification } = useVerifyEmail();
+
+    const { determineReauthStatus } = useDetermineReauth();
 
     return (
         <Stack spacing={3}>
@@ -53,6 +63,29 @@ export const AccountSetting = () => {
             <Box>
                 <SectionSubHeading text='Verify email' />
                 <SectionCaption text='verify email [need good text]' />
+
+                <TextField
+                    label="User Email"
+                    defaultValue={user.email}
+                    slotProps={{
+                        input: {
+                            readOnly: true,
+                            endAdornment: (
+                                <InputAdornment position='end'>
+                                    {user.auth.isEmailVerified ?
+                                        <ToolTip title='Email verified'>
+                                            <EmailVerifiedIcon color='success' sx={{ cursor: 'pointer' }} />
+                                        </ToolTip> :
+                                        <Button variant='contained' onClick={initiateEmailVerification}>
+                                            Verify email
+                                        </Button>
+                                    }
+                                </InputAdornment>
+                            ),
+                        },
+                    }}
+                    fullWidth
+                />
             </Box>
 
             <Box>
@@ -64,7 +97,7 @@ export const AccountSetting = () => {
                 <SectionSubHeading text='Change Password' />
                 <SectionCaption text='Update password [need good text]' />
 
-                <CenteredBox component='form' onSubmit={handleSubmit} sx={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                <CenteredBox component='form' onSubmit={handleChangePassword} sx={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
                     <FormTextField
                         name='currentPassword'
                         label='Current Password'

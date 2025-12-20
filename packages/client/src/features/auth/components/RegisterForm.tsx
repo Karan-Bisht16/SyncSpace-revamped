@@ -36,7 +36,7 @@ export const RegisterForm = (props: RegisterFormProps) => {
         validateEmailAvailability,
         usernameAvailability,
         validateUsernameAvailability,
-        handleSubmit,
+        handleRegister,
         phase,
         naviagteToCredentialsPhase,
     } = useRegisterForm();
@@ -77,7 +77,7 @@ export const RegisterForm = (props: RegisterFormProps) => {
             <CenteredBox
                 component='form'
                 sx={{ flexDirection: 'column', width: '100%' }}
-                onSubmit={handleSubmit}
+                onSubmit={handleRegister}
             >
                 <CenteredBox sx={{ flexDirection: 'column', gap: 2.75, width: '100%' }}>
                     {phase === 'CREDENTIALS' &&

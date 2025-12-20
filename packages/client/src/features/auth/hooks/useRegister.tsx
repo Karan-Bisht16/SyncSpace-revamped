@@ -117,7 +117,7 @@ export const useRegisterForm = () => {
         return true;
     };
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         try {
@@ -186,7 +186,7 @@ export const useRegisterForm = () => {
         validateEmailAvailability,
         usernameAvailability,
         validateUsernameAvailability,
-        handleSubmit,
+        handleRegister,
         phase,
         naviagteToCredentialsPhase,
         naviagteToProfilePhase,

@@ -23,7 +23,6 @@ import {
 import {
     forgotPassword,
     resetPassword,
-    decodeResetPasswordToken,
 } from '../controllers/auth/recovery.auth.controller.js';
 
 const { maxProfilePicSizeMB } = sharedConfig;
@@ -44,7 +43,6 @@ router.post('/loginViaFacebook', loginViaFacebook);
 router.post('/refresh', refresh);
 router.post('/reauth', auth, reauth);
 router.post('/forgotPassword', forgotPassword);
-router.post('/decodeResetPasswordToken', decodeResetPasswordToken);
 
 // PATCH
 router.patch('/resetPassword', resetPassword);

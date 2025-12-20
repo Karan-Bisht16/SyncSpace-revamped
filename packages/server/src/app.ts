@@ -38,6 +38,8 @@ import authRoutes from './routes/auth.routes.js';
 app.use('/auth', authRoutes);
 import userRoutes from './routes/user.routes.js';
 app.use('/user', userRoutes);
+import tokenRoutes from './routes/token.routes.js';
+app.use('/token', tokenRoutes);
 import interactionRoutes from './routes/interaction.routes.js';
 app.use('/interaction', interactionRoutes);
 

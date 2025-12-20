@@ -1,7 +1,7 @@
 // importing lib
 import { API } from '../../../libs/axios.lib';
 // importing types
-import type { ForgotPasswordParams, IsEmailAvailableParams, IsUsernameAvailableParams, DecodeResetPasswordTokenParams } from '../types';
+import type { ForgotPasswordParams, IsEmailAvailableParams, IsUsernameAvailableParams } from '../types';
 // importing services
 import { apiHandler } from '../../../services/api.service';
 
@@ -16,7 +16,3 @@ export const isUsernameAvailable = (
 export const forgotPassword = (
     body: ForgotPasswordParams,
 ) => apiHandler(() => API.post('/auth/forgotPassword', body));
-
-export const decodeResetPasswordToken = (
-    body: DecodeResetPasswordTokenParams,
-) => apiHandler(() => API.post('/auth/decodeResetPasswordToken', body));

@@ -55,15 +55,14 @@ export const logout = (
 ) => apiHandler(() => API.delete('/auth/logout'));
 
 // profile services
+export const verifyEmail = (
+) => apiHandler(() => API.patch('/user/verifyEmail'));
 
 export const updateEmail = (
     body: UpdateEmailParams,
 ) => apiHandler(() => API.patch('/user/updateEmail', body), {
     reauthService: 'updateEmail',
 });
-
-export const verifyEmail = (
-) => apiHandler(() => API.patch('/user/verifyEmail'));
 
 // account services
 export const updateSetting = (

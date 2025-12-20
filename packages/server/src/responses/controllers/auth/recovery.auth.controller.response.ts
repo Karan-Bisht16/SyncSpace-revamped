@@ -11,13 +11,6 @@ export const RecoveryAuthControllerResponses = {
             trace: 'RecoveryAuthController/forgotPassword/success',
         },
     },
-    decodeResetPasswordToken: {
-        success: {
-            code: 200,
-            message: 'Token is valid',
-            trace: 'RecoveryAuthController/decodeResetPasswordToken/success',
-        },
-    },
     resetPassword: {
         success: {
             code: 200,
