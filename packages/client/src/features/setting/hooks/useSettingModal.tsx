@@ -77,7 +77,7 @@ export const useSettingModal = () => {
                     <>
                         This action is irreversible. Once deleted, you will not be able to create a new profile with the same name (i.e., e/me). If you intend to delete this profile only to recreate it, please consider using the 'Edit Profile' option instead.
                         <br /><br />
-                        Are you sure you want to proceed?`,
+                        Are you sure you want to proceed?,
                     </>
             },
             modalButtons: [
