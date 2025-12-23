@@ -609,3 +609,912 @@ export default Profile;
 
 
 -----
+[NEW CONTENT]
+
+Perfect use-case for AWS SES 👍
+SES does NOT use Nodemailer, so it usually passes org restrictions, and Free Tier is enough for most projects.
+
+Below I’ll show you how to replicate your existing Nodemailer flow with AWS SES, keeping your structure almost identical.
+
+0️⃣ AWS SES Free Tier (important facts)
+✅ Free Tier (while in sandbox)
+
+62,000 emails / month
+
+Only to verified emails
+
+Only from verified sender
+
+No custom domain required initially
+
+To go production:
+
+Request SES sandbox removal (1–2 days approval)
+
+1️⃣ AWS setup (one-time)
+Step 1: Create IAM user
+
+Give permissions:
+
+{
+  "Effect": "Allow",
+  "Action": ["ses:SendEmail", "ses:SendRawEmail"],
+  "Resource": "*"
+}
+
+
+Save:
+
+AWS_ACCESS_KEY_ID
+
+AWS_SECRET_ACCESS_KEY
+
+Step 2: Verify email
+
+SES Console → Verified identities → Verify sender email
+
+This replaces:
+
+NODEMAILER_EMAIL
+
+2️⃣ Install AWS SDK (SES v3)
+npm install @aws-sdk/client-ses
+
+3️⃣ Environment variables
+AWS_ACCESS_KEY_ID=xxx
+AWS_SECRET_ACCESS_KEY=xxx
+AWS_REGION=ap-south-1
+
+SES_FROM_EMAIL=no-reply@yourdomain.com
+
+4️⃣ SES client (replaces Nodemailer transporter)
+src/lib/ses.ts
+import { SESClient } from "@aws-sdk/client-ses";
+
+export const sesClient = new SESClient({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+5️⃣ Replace sendMail (SES version)
+✅ Direct replacement for Nodemailer logic
+import { SendEmailCommand } from "@aws-sdk/client-ses";
+import { sesClient } from "../lib/ses.js";
+import { logToDb } from "../services/log.service.js";
+import type { SendMailParams } from "../types/index.js";
+
+export const sendMail = async (params: SendMailParams) => {
+  const { req, to, subject, html } = params;
+
+  try {
+    const command = new SendEmailCommand({
+      Source: process.env.SES_FROM_EMAIL!,
+      Destination: {
+        ToAddresses: Array.isArray(to) ? to : [to],
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: "UTF-8",
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: "UTF-8",
+          },
+        },
+      },
+    });
+
+    await sesClient.send(command);
+  } catch (error: any) {
+    await logToDb({
+      type: "error",
+      payload: {
+        req,
+        description: error.message,
+        userId: req.user?._id,
+        stack: error.stack,
+      },
+    });
+  }
+};
+
+
+✔ Async / await
+✔ Same error logging
+✔ No SMTP
+✔ No Nodemailer
+
+6️⃣ getEmail stays the same
+export const getEmail = (user: UserDocument) => {
+  if (MODE === "DEVELOPMENT") {
+    return "karan161003@gmail.com";
+  }
+  return user.email;
+};
+
+
+SES sandbox requires verified email → perfect for dev.
+
+7️⃣ getEmailLink stays EXACTLY the same
+
+No SES changes needed:
+
+export const getEmailLink = async (params: GetEmailLinkParams) => {
+  const { req, action, data, expiresIn } = params;
+
+  const origin = validateReqOrigin(req);
+
+  const emailToken = jwt.sign(
+    { action, ...data },
+    EMAIL_SECRET,
+    { expiresIn: expiresIn as any }
+  );
+
+  return `${origin}/email/${action}/${emailToken}`;
+};
+
+8️⃣ Feature parity with Nodemailer
+Feature	Nodemailer	SES
+HTML emails	✅	✅
+Attachments	✅	✅ (SendRawEmail)
+Bulk send	⚠️	✅
+Tracking	❌	✅
+Rate limiting	❌	✅
+API based	❌	✅
+9️⃣ SES with attachments (optional)
+import { SendRawEmailCommand } from "@aws-sdk/client-ses";
+
+
+I’ll skip this unless you ask — it’s a bit verbose.
+
+🔐 Security notes (important)
+
+Never commit AWS keys
+
+Use IAM role in prod (EC2 / ECS / Lambda)
+
+Restrict SES region
+
+Set bounce/complaint SNS later
+
+✅ TL;DR (Drop-in replacement)
+
+Nodemailer ❌
+
+SES SDK ✅
+
+No SMTP
+
+Free tier friendly
+
+Works in restricted orgs
+
+
+-----
+
+Here is a complete solution implementing a modern, sleek Profile page with in-place editing, following your specific architecture and strict TypeScript/MUI requirements.
+
+1. Updated Redux Thunks & Types
+First, we need to add the updateProfile logic. I am assuming your API accepts multipart/form-data because we are dealing with file uploads (profilePic, banner).
+
+types/profile.types.ts (New or appended to existing types)
+
+TypeScript
+
+export interface SocialItem {
+    platform: string;
+    url: string;
+}
+
+export interface UpdateProfileParams {
+    username: string;
+    bio: string;
+    socials: SocialItem[];
+    // Files are optional as user might not update them
+    profilePic?: File;
+    banner?: File;
+}
+features/profile/profile.user.thunk.ts
+
+TypeScript
+
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import { ApiError, UserClientBase } from '@syncspace/shared';
+// Assume you have an api service for this
+import { updateProfile as updateProfileService } from '../../services/api.service'; 
+import { handleUserResponse } from '../../utils/userSlice.utils';
+import { UpdateProfileParams } from '../../types';
+
+export const updateProfile = createAsyncThunk<
+    UserClientBase,
+    UpdateProfileParams,
+    { rejectValue: ApiError }
+>('profile/updateProfile', async (data, { rejectWithValue }) => {
+    // Convert DTO to FormData for file handling
+    const formData = new FormData();
+    formData.append('username', data.username);
+    formData.append('bio', data.bio);
+    formData.append('socials', JSON.stringify(data.socials)); // Send complex arrays as JSON string
+    
+    if (data.profilePic) formData.append('profilePic', data.profilePic);
+    if (data.banner) formData.append('banner', data.banner);
+
+    const response = await updateProfileService(formData);
+    return handleUserResponse(response, rejectWithValue);
+});
+
+// ... existing exports (updateEmail, verifyEmail)
+features/profile/profile.user.reducer.ts
+
+TypeScript
+
+import { ActionReducerMapBuilder } from '@reduxjs/toolkit';
+import { UserSlice } from '../../types';
+import { updateProfile } from './profile.user.thunk';
+import {
+    setUserError,
+    setUserLoading,
+    setUserSuccess,
+} from '../../utils/userSlice.utils';
+
+// ... existing imports
+
+export const profileExtraReducers = (builder: ActionReducerMapBuilder<UserSlice>) => {
+    // ... existing builder cases for updateEmail/verifyEmail
+
+    // Update Profile Cases
+    builder
+        .addCase(updateProfile.pending, (state) => {
+            setUserLoading('updateProfile', state);
+        })
+        .addCase(updateProfile.fulfilled, (state, action) => {
+            state.user = action.payload;
+            setUserSuccess('updateProfile', state);
+        })
+        .addCase(updateProfile.rejected, (state, action) => {
+            setUserError('updateProfile', state, action);
+        });
+};
+2. The Profile Page Component
+This component handles the view logic, form state, image previews, and conditional rendering (Read vs. Edit mode).
+
+pages/Profile/UserProfile.tsx
+
+TypeScript
+
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import {
+    Box,
+    Button,
+    Container,
+    Typography,
+    Avatar,
+    Paper,
+    Grid,
+    IconButton,
+    TextField,
+    Stack,
+    MenuItem,
+    Select,
+    InputAdornment,
+    CircularProgress,
+    FormControl,
+    InputLabel
+} from '@mui/material';
+import {
+    Edit as EditIcon,
+    Save as SaveIcon,
+    Cancel as CancelIcon,
+    PhotoCamera as CameraIcon,
+    Delete as DeleteIcon,
+    Add as AddIcon,
+    Language as WebIcon,
+    Twitter,
+    Instagram,
+    Facebook,
+    LinkedIn,
+    Reddit
+} from '@mui/icons-material';
+
+// Redux
+import { useAppDispatch, useAppSelector } from '../../hooks/redux.hooks';
+import { updateProfile } from '../../features/profile/profile.user.thunk';
+import type { SocialItem } from '../../types';
+
+// --- Helper Components & Constants ---
+
+const SOCIAL_PLATFORMS = ['Twitter', 'Reddit', 'Instagram', 'Facebook', 'LinkedIn', 'Website', 'Other'];
+
+const getSocialIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+        case 'twitter': return <Twitter />;
+        case 'instagram': return <Instagram />;
+        case 'facebook': return <Facebook />;
+        case 'linkedin': return <LinkedIn />;
+        case 'reddit': return <Reddit />;
+        default: return <WebIcon />;
+    }
+};
+
+const SocialLink = ({ platform, url }: SocialItem) => (
+    <IconButton 
+        component="a" 
+        href={url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        color="primary"
+        title={platform}
+    >
+        {getSocialIcon(platform)}
+    </IconButton>
+);
+
+// --- Main Component ---
+
+const UserProfile = () => {
+    const dispatch = useAppDispatch();
+    const { user, status } = useAppSelector((state) => state.user);
+    const isLoading = status.updateProfile === 'loading';
+
+    // Toggle Mode
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Form State
+    const [username, setUsername] = useState(user?.username || '');
+    const [bio, setBio] = useState(user?.bio || '');
+    const [socials, setSocials] = useState<SocialItem[]>(user?.socials || []);
+    
+    // Image Preview State (Local only)
+    const [bannerPreview, setBannerPreview] = useState<string | null>(user?.banner?.highRes?.url || null);
+    const [profilePreview, setProfilePreview] = useState<string | null>(user?.profilePic?.highRes?.url || null);
+    
+    // File State (For upload)
+    const [bannerFile, setBannerFile] = useState<File | undefined>(undefined);
+    const [profileFile, setProfileFile] = useState<File | undefined>(undefined);
+
+    // Sync state with Redux user on load/cancel
+    useEffect(() => {
+        if (!isEditing && user) {
+            setUsername(user.username);
+            setBio(user.bio || '');
+            setSocials(user.socials || []);
+            setBannerPreview(user.banner?.highRes?.url || '');
+            setProfilePreview(user.profilePic?.highRes?.url || '');
+        }
+    }, [isEditing, user]);
+
+    // --- Handlers ---
+
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>, type: 'banner' | 'profile') => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const previewUrl = URL.createObjectURL(file);
+            
+            if (type === 'banner') {
+                setBannerFile(file);
+                setBannerPreview(previewUrl);
+            } else {
+                setProfileFile(file);
+                setProfilePreview(previewUrl);
+            }
+        }
+    };
+
+    const handleAddSocial = () => {
+        setSocials([...socials, { platform: 'Website', url: '' }]);
+    };
+
+    const handleRemoveSocial = (index: number) => {
+        setSocials(socials.filter((_, i) => i !== index));
+    };
+
+    const handleSocialChange = (index: number, field: keyof SocialItem, value: string) => {
+        const newSocials = [...socials];
+        newSocials[index] = { ...newSocials[index], [field]: value };
+        setSocials(newSocials);
+    };
+
+    const handleSave = async () => {
+        // Basic Validation
+        if (!username.trim()) return alert("Username is required");
+
+        const result = await dispatch(updateProfile({
+            username,
+            bio,
+            socials,
+            profilePic: profileFile,
+            banner: bannerFile
+        }));
+
+        if (updateProfile.fulfilled.match(result)) {
+            setIsEditing(false);
+        }
+    };
+
+    // --- Renderers ---
+
+    if (!user) return <Typography>Loading Profile...</Typography>;
+
+    return (
+        <Container maxWidth="md" sx={{ py: 4 }}>
+            <Paper 
+                elevation={3} 
+                sx={{ 
+                    borderRadius: 3, 
+                    overflow: 'hidden', 
+                    position: 'relative',
+                    bgcolor: 'background.paper'
+                }}
+            >
+                {/* Banner Section */}
+                <Box 
+                    sx={{ 
+                        height: 200, 
+                        bgcolor: 'grey.300',
+                        backgroundImage: `url(${bannerPreview})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        position: 'relative'
+                    }}
+                >
+                    {isEditing && (
+                        <Box sx={{ 
+                            position: 'absolute', 
+                            inset: 0, 
+                            bgcolor: 'rgba(0,0,0,0.4)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                        }}>
+                            <Button 
+                                variant="contained" 
+                                component="label" 
+                                startIcon={<CameraIcon />}
+                                size="small"
+                            >
+                                Edit Banner
+                                <input hidden accept="image/*" type="file" onChange={(e) => handleImageChange(e, 'banner')} />
+                            </Button>
+                        </Box>
+                    )}
+                </Box>
+
+                {/* Main Content Area */}
+                <Box sx={{ px: 4, pb: 4, mt: -6 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mb: 2 }}>
+                        {/* Profile Picture */}
+                        <Box sx={{ position: 'relative' }}>
+                            <Avatar
+                                src={profilePreview || undefined}
+                                alt={username}
+                                sx={{ 
+                                    width: 120, 
+                                    height: 120, 
+                                    border: '4px solid',
+                                    borderColor: 'background.paper',
+                                    boxShadow: 2
+                                }}
+                            >
+                                {!profilePreview && username[0]?.toUpperCase()}
+                            </Avatar>
+                            {isEditing && (
+                                <IconButton 
+                                    component="label"
+                                    sx={{ 
+                                        position: 'absolute', 
+                                        bottom: 0, 
+                                        right: 0, 
+                                        bgcolor: 'primary.main', 
+                                        color: 'white',
+                                        '&:hover': { bgcolor: 'primary.dark' }
+                                    }}
+                                >
+                                    <CameraIcon fontSize="small" />
+                                    <input hidden accept="image/*" type="file" onChange={(e) => handleImageChange(e, 'profile')} />
+                                </IconButton>
+                            )}
+                        </Box>
+
+                        {/* Edit Actions */}
+                        <Box sx={{ mb: 1 }}>
+                            {isEditing ? (
+                                <Stack direction="row" spacing={1}>
+                                    <Button 
+                                        variant="outlined" 
+                                        color="error" 
+                                        startIcon={<CancelIcon />} 
+                                        onClick={() => setIsEditing(false)}
+                                        disabled={isLoading}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        variant="contained" 
+                                        startIcon={isLoading ? <CircularProgress size={20} color="inherit"/> : <SaveIcon />} 
+                                        onClick={handleSave}
+                                        disabled={isLoading}
+                                    >
+                                        Save
+                                    </Button>
+                                </Stack>
+                            ) : (
+                                <Button 
+                                    variant="outlined" 
+                                    startIcon={<EditIcon />} 
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    Edit Profile
+                                </Button>
+                            )}
+                        </Box>
+                    </Stack>
+
+                    {/* Info Section */}
+                    <Box sx={{ mt: 2 }}>
+                        {isEditing ? (
+                            // --- EDIT MODE FORM ---
+                            <Stack spacing={3} sx={{ mt: 2 }}>
+                                <TextField
+                                    label="Username"
+                                    fullWidth
+                                    variant="outlined"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    helperText="Unique identifier"
+                                />
+                                <TextField
+                                    label="Bio"
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    variant="outlined"
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    inputProps={{ maxLength: 100 }}
+                                    helperText={`${bio.length}/100 characters`}
+                                />
+                                
+                                <Typography variant="h6" sx={{ mt: 2 }}>Social Connections</Typography>
+                                {socials.map((social, index) => (
+                                    <Grid container spacing={2} key={index} alignItems="center">
+                                        <Grid item xs={4} sm={3}>
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>Platform</InputLabel>
+                                                <Select
+                                                    value={social.platform}
+                                                    label="Platform"
+                                                    onChange={(e) => handleSocialChange(index, 'platform', e.target.value)}
+                                                    renderValue={(value) => (
+                                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                            {getSocialIcon(value)} {value}
+                                                        </Box>
+                                                    )}
+                                                >
+                                                    {SOCIAL_PLATFORMS.map((p) => (
+                                                        <MenuItem key={p} value={p}>
+                                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                                {getSocialIcon(p)} {p}
+                                                            </Box>
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={6} sm={8}>
+                                            <TextField 
+                                                fullWidth 
+                                                size="small" 
+                                                placeholder="https://..."
+                                                value={social.url}
+                                                onChange={(e) => handleSocialChange(index, 'url', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={2} sm={1}>
+                                            <IconButton color="error" onClick={() => handleRemoveSocial(index)}>
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Grid>
+                                    </Grid>
+                                ))}
+                                <Button 
+                                    startIcon={<AddIcon />} 
+                                    variant="text" 
+                                    onClick={handleAddSocial}
+                                    sx={{ alignSelf: 'flex-start' }}
+                                >
+                                    Add Social
+                                </Button>
+                            </Stack>
+                        ) : (
+                            // --- VIEW MODE ---
+                            <>
+                                <Typography variant="h5" fontWeight="bold">
+                                    {user.username}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    {user.email} {user.auth.isEmailVerified && "✅"}
+                                </Typography>
+                                
+                                {user.bio && (
+                                    <Typography variant="body1" sx={{ mb: 3, whiteSpace: 'pre-wrap' }}>
+                                        {user.bio}
+                                    </Typography>
+                                )}
+
+                                {/* Stats Grid */}
+                                <Grid container spacing={2} sx={{ mb: 3, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                                    <Grid item xs={3} textAlign="center">
+                                        <Typography variant="h6" fontWeight="bold">{user.followersCount}</Typography>
+                                        <Typography variant="caption" color="text.secondary">Followers</Typography>
+                                    </Grid>
+                                    <Grid item xs={3} textAlign="center">
+                                        <Typography variant="h6" fontWeight="bold">{user.followingCount}</Typography>
+                                        <Typography variant="caption" color="text.secondary">Following</Typography>
+                                    </Grid>
+                                    <Grid item xs={3} textAlign="center">
+                                        <Typography variant="h6" fontWeight="bold">{user.subspacesJoinedCount}</Typography>
+                                        <Typography variant="caption" color="text.secondary">Joined</Typography>
+                                    </Grid>
+                                    <Grid item xs={3} textAlign="center">
+                                        <Typography variant="h6" fontWeight="bold">{user.postsCount}</Typography>
+                                        <Typography variant="caption" color="text.secondary">Posts</Typography>
+                                    </Grid>
+                                </Grid>
+
+                                <Stack direction="row" spacing={1}>
+                                    {user.socials && user.socials.map((social, idx) => (
+                                        <SocialLink key={idx} {...social} />
+                                    ))}
+                                </Stack>
+                            </>
+                        )}
+                    </Box>
+                </Box>
+            </Paper>
+        </Container>
+    );
+};
+
+export default UserProfile;
+Key Features of this Implementation:
+Architecture Compliance: It uses your user.reducer, profile.user.thunk, and profile.user.reducer structures. It dispatches a strongly typed AsyncThunk that returns a UserClientBase.
+
+Sleek Styling (MUI):
+
+Uses a "Banner + Avatar overlap" layout common in modern social apps (like Twitter/Discord).
+
+Uses Stack and Grid for layout consistency.
+
+Visual feedback for "Edit" mode with hover overlays on images.
+
+In-Place Editing:
+
+No modals. The isEditing boolean toggles the internal render logic of the main content area.
+
+Image Previews: Using URL.createObjectURL allows the user to see what the new banner/avatar looks like instantly before uploading.
+
+Socials Management:
+
+Dynamic array management (Add/Remove rows).
+
+A Selector for the platform (renders the specific Icon in the dropdown).
+
+Maps to the specific Icons you requested (Twitter, Reddit, etc.) and falls back to a generic web icon.
+
+Validation:
+
+Includes basic validation (checking if username is empty).
+
+Limits Bio length to 100 characters (matching your schema).
+
+
+-----
+
+Here is the complete server-side implementation.
+
+I have included the Controller logic to handle the text and file inputs, and the Route configuration to handle the multipart/form-data with Multer fields.
+
+1. Update profile.user.controller.ts
+Add the updateProfile function. This handles parsing the JSON socials, checking for username uniqueness, and mapping the Multer diskStorage file objects to your User schema structure.
+
+TypeScript
+
+import {
+    ApiError,
+    ApiResponse,
+    validateAll,
+    validateCurrentPassword,
+    validateNewPassword,
+} from '@syncspace/shared';
+// importing config
+import { UPDATE_EMAIL_EXPIRY, VERIFY_EMAIL_EXPIRY } from '../../config/env.config.js';
+// importing types
+import type { UserDocument } from '@syncspace/shared';
+import type { Request } from 'express';
+// importing models
+import { User } from '../../models/user.model.js';
+// importing libs
+import { validateToken } from '../../lib/jwt.lib.js';
+import { getEmail, getEmailLink, sendMail } from '../../lib/nodemailer.lib.js';
+// importing service
+import { validateNewEmail, getUserState } from '../../services/user.service.js';
+// importing utils
+import { asyncReqHandler } from '../../utils/asyncReqHandler.util.js';
+import { validateReqBody } from '../../utils/validateReq.util.js';
+// importing responses 
+import {
+    ProfileUserControllerResponses as responses,
+    getProfileUserControllerResponse as getResponses,
+} from '../../responses/index.js';
+
+// ... (Existing exports: initiateEmailVerification, verifyEmail, etc.)
+
+export const updateProfile = asyncReqHandler(async (req: Request) => {
+    const { updateProfile: profileRes } = responses;
+    
+    // 1. Validate Body
+    const body = validateReqBody(req);
+    const { username, bio, socials } = body;
+
+    const user = req.user as UserDocument;
+
+    // 2. Prepare Update Object
+    const updateData: any = {};
+
+    // 3. Handle Username Update (Check uniqueness)
+    if (username && username !== user.username) {
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            throw new ApiError(profileRes.usernameTaken || { code: 409, message: "Username already taken" });
+        }
+        updateData.username = username;
+    }
+
+    // 4. Handle Simple Text Fields
+    if (typeof bio === 'string') {
+        updateData.bio = bio;
+    }
+
+    // 5. Handle Socials (Parsing JSON string from FormData)
+    if (socials) {
+        try {
+            // FormData sends arrays/objects as JSON strings
+            const parsedSocials = typeof socials === 'string' ? JSON.parse(socials) : socials;
+            if (Array.isArray(parsedSocials)) {
+                updateData.socials = parsedSocials;
+            }
+        } catch (error) {
+            throw new ApiError({ code: 400, message: "Invalid socials format" });
+        }
+    }
+
+    // 6. Handle Files (Multer DiskStorage)
+    // req.files is an object like: { profilePic: [File], banner: [File] }
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    if (files) {
+        // Helper to format Multer file to your fileSchema
+        const formatFile = (file: Express.Multer.File) => ({
+            name: file.originalname,
+            size: file.size,
+            type: file.mimetype,
+            // Assuming diskStorage: constructing a public URL 
+            // You might need to adjust the path based on your static file serving setup
+            url: `/uploads/${file.filename}`, 
+        });
+
+        if (files.profilePic?.[0]) {
+            // Updating highRes. Logic for lowRes/thumbnail generation can be added here if using sharp
+            updateData['profilePic.highRes'] = formatFile(files.profilePic[0]);
+        }
+
+        if (files.banner?.[0]) {
+            updateData['banner.highRes'] = formatFile(files.banner[0]);
+        }
+    }
+
+    // 7. Execute Update
+    const updatedUser = await User.findByIdAndUpdate(
+        user._id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+        throw new ApiError(profileRes.updateFailed || { code: 500, message: "Failed to update profile" });
+    }
+
+    // 8. Return Sanitized User
+    return new ApiResponse(
+        profileRes.success || { code: 200, message: "Profile updated successfully" },
+        getUserState(updatedUser)
+    );
+});
+2. Update user.routes.ts
+We need to configure the specific Multer middleware for this route since the generic fileUploadHandler in your provided files is optimized for single-field uploads.
+
+TypeScript
+
+import { Router } from 'express';
+// importing middlewares
+import { auth } from '../middlewares/auth.middleware.js';
+import { requireReauth } from '../middlewares/requireReauth.middleware.js';
+import { configureMulter, configureMulterErrorHandler } from '../middlewares/multer.middleware.js'; // Assumed export based on context
+// importing controllers
+import {
+    deleteAccount,
+    resetSetting,
+    updateSetting,
+} from '../controllers/user/account.user.controller.js';
+import {
+    changePassword,
+    initiateEmailUpdation,
+    initiateEmailVerification,
+    updateEmail,
+    verifyEmail,
+    updateProfile, // Import the new controller
+} from '../controllers/user/profile.user.controller.js';
+import {
+    determineReauth,
+    fetchSession,
+} from '../controllers/user/session.user.controller.js';
+
+const router = Router();
+
+// GET
+router.get('/fetchSession', auth, fetchSession);
+router.get('/determineReauth', auth, requireReauth, determineReauth);
+
+// POST
+router.post('/initiateEmailVerification', auth, requireReauth, initiateEmailVerification);
+router.post('/initiateEmailUpdation', auth, requireReauth, initiateEmailUpdation);
+
+// PATCH
+router.patch('/verifyEmail', verifyEmail);
+router.patch('/updateEmail', updateEmail);
+router.patch('/updateSetting', auth, updateSetting);
+router.patch('/resetSetting', auth, resetSetting);
+router.patch('/changePassword', auth, requireReauth, changePassword);
+
+// --- NEW ROUTE FOR PROFILE UPDATE ---
+// Configuring Multer specifically for profile update (Profile Pic + Banner)
+const profileUpload = configureMulter({ 
+    sizeLimitBytes: 5 * 1024 * 1024 // 5MB limit example
+}).fields([
+    { name: 'profilePic', maxCount: 1 },
+    { name: 'banner', maxCount: 1 }
+]);
+
+const profileUploadErrorHandler = configureMulterErrorHandler({ 
+    sizeLimitMB: 5, 
+    fieldName: 'profilePic/banner' 
+});
+
+router.patch(
+    '/updateProfile', 
+    auth, 
+    profileUpload, 
+    profileUploadErrorHandler, 
+    updateProfile
+);
+
+// DELETE
+router.delete('/deleteAccount', auth, requireReauth, deleteAccount);
+
+export default router;
+3. Note on responses/index.js
+The code above assumes responses contains messages for updateProfile. If not, ensure you add them to your response configuration file:
+
+TypeScript
+
+// Inside ProfileUserControllerResponses
+updateProfile: {
+    success: { code: 200, message: 'Profile updated successfully' },
+    usernameTaken: { code: 409, message: 'This username is already taken' },
+    updateFailed: { code: 500, message: 'Failed to update profile' }
+}
